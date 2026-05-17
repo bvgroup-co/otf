@@ -9,8 +9,10 @@ import (
 
 	"github.com/DataDog/jsonapi"
 	tfe "github.com/hashicorp/go-tfe"
+	"github.com/leg100/otf/internal"
 	"github.com/leg100/otf/internal/github/testserver"
 	otfrun "github.com/leg100/otf/internal/run"
+	"github.com/leg100/otf/internal/runner"
 	"github.com/leg100/otf/internal/runstatus"
 	"github.com/leg100/otf/internal/testutils"
 	"github.com/leg100/otf/internal/vcs"
@@ -103,4 +105,57 @@ func TestIntegration_WorkspaceAPI_CreateConnected(t *testing.T) {
 	run = daemon.waitRunStatus(t, ctx, run.ID, runstatus.Planned)
 	// status matches, now check whether reports match as well
 	assert.Equal(t, &otfrun.Report{Additions: 2}, run.Plan.ResourceReport)
+}
+
+// TestIntegration_WorkspaceAPI_AgentPoolRelationship verifies that the
+// json:api response for a workspace in agent execution mode populates the
+// `agent-pool` *relationship* (not just the legacy `agent-pool-id`
+// attribute). go-tfe and terraform-provider-tfe read the pool ID from the
+// relationship; omitting it caused "Provider produced inconsistent result
+// after apply" when applying tfe_workspace_settings.
+func TestIntegration_WorkspaceAPI_AgentPoolRelationship(t *testing.T) {
+	integrationTest(t)
+
+	daemon, org, ctx := setup(t)
+
+	pool, err := daemon.Runners.CreateAgentPool(ctx, runner.CreateAgentPoolOptions{
+		Name:         "pool-1",
+		Organization: org.Name,
+	})
+	require.NoError(t, err)
+
+	ws, err := daemon.Workspaces.CreateWorkspace(ctx, workspace.CreateOptions{
+		Name:          new("ws-with-pool"),
+		Organization:  &org.Name,
+		ExecutionMode: internal.Ptr(workspace.AgentExecutionMode),
+		AgentPoolID:   &pool.ID,
+	})
+	require.NoError(t, err)
+
+	_, token := daemon.createToken(t, ctx, nil)
+
+	u := fmt.Sprintf("https://%s/api/v2/workspaces/%s", daemon.System.Hostname(), ws.ID)
+	r, err := http.NewRequest("GET", u, nil)
+	require.NoError(t, err)
+	r.Header.Add("Authorization", "Bearer "+string(token))
+
+	resp, err := http.DefaultClient.Do(r)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	require.Equal(t, 200, resp.StatusCode)
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	// jsonapi.Unmarshal populates the relationship into got.AgentPool when
+	// the response contains a `data.relationships.agent-pool` block.
+	got := &workspace.TFEWorkspace{}
+	require.NoError(t, jsonapi.Unmarshal(body, got))
+
+	require.NotNil(t, got.AgentPool, "agent-pool relationship missing from json:api response")
+	assert.Equal(t, pool.ID, got.AgentPool.ID)
+
+	// Legacy flat attribute should still be present for backwards compat.
+	require.NotNil(t, got.AgentPoolID)
+	assert.Equal(t, pool.ID, *got.AgentPoolID)
 }

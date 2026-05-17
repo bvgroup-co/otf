@@ -57,6 +57,7 @@ type TFEWorkspace struct {
 	TagNames                   []string                 `jsonapi:"attribute" json:"tag-names"`
 
 	// Relations
+	AgentPool    *TFEAgentPoolRef              `jsonapi:"relationship" json:"agent-pool"`
 	CurrentRun   *TFERun                       `jsonapi:"relationship" json:"current-run"`
 	Organization *organization.TFEOrganization `jsonapi:"relationship" json:"organization"`
 	Outputs      []*TFEWorkspaceOutput         `jsonapi:"relationship" json:"outputs"`
@@ -65,6 +66,19 @@ type TFEWorkspace struct {
 
 type TFERun struct {
 	ID resource.TfeID `jsonapi:"primary,runs"`
+}
+
+// TFEAgentPoolRef is a minimal reference to an agent pool, used for the
+// json:api `agent-pool` relationship on TFEWorkspace.
+//
+// We can't reuse runner.TFEAgentPool here because the runner package imports
+// this workspace package (TFEAgentPool has a []*TFEWorkspace relation), so
+// pulling it in would cause a circular import. Only the ID is needed for the
+// relationship payload — clients (go-tfe, terraform-provider-tfe) read it
+// from `data.relationships.agent-pool.data.id`. The flat `agent-pool-id`
+// attribute is kept for backwards compatibility.
+type TFEAgentPoolRef struct {
+	ID resource.TfeID `jsonapi:"primary,agent-pools"`
 }
 
 type TFEWorkspaceOutput struct {

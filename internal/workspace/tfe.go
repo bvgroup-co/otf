@@ -593,6 +593,9 @@ func ToTFE(a *authz.Authorizer, from *Workspace, r *http.Request) (*TFEWorkspace
 	if from.SSHKeyID != nil {
 		to.SSHKey = &sshkey.TFESSHKey{ID: *from.SSHKeyID}
 	}
+	if from.AgentPoolID != nil {
+		to.AgentPool = &TFEAgentPoolRef{ID: *from.AgentPoolID}
+	}
 
 	// Add VCS repo to json:api struct if connected. NOTE: the terraform CLI
 	// uses the presence of VCS repo to determine whether to allow a terraform
