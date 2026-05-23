@@ -2,7 +2,7 @@ name: build
 on:
   push:
     branches:
-      - master
+      - main
     tags:
       - "v*.*.*"
   pull_request:
@@ -66,7 +66,7 @@ jobs:
           path: internal/integration/traces
   release-please:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     outputs:
       release_created: ${{ steps.release-please.outputs.release_created }}
       tag_name: ${{ steps.release-please.outputs.tag_name }} # e.g. v1.0.0
@@ -132,7 +132,7 @@ jobs:
           git config --global user.name "Chart bumper"
           git add -A
           git commit -m "chore: bump helm charts with app version ${{ needs.release-please.outputs.tag_name }}"
-          git push origin master
+          git push origin main
       - name: Checkout charts repo
         uses: actions/checkout@v6
         with:
@@ -151,4 +151,4 @@ jobs:
           git config --global user.name "Chart bumper"
           git add -A
           git commit -m "New otf version ${{ needs.release-please.outputs.tag_name }}"
-          git push origin master
+          git push origin main
