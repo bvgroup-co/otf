@@ -63,7 +63,7 @@ dockers_v2:
 - id: otfd
   ids: [otfd]
   images:
-    - leg100/otfd
+    - ghcr.io/bvgroup-co/otfd
   tags:
   - "latest"
   - "edge"
@@ -76,7 +76,7 @@ dockers_v2:
 - id: otf-agent
   ids: [otf-agent]
   images:
-    - leg100/otf-agent
+    - ghcr.io/bvgroup-co/otf-agent
   tags:
   - "latest"
   - "edge"
@@ -89,7 +89,7 @@ dockers_v2:
 - id: otf-job
   ids: [otf-job]
   images:
-    - leg100/otf-job
+    - ghcr.io/bvgroup-co/otf-job
   tags:
   - "latest"
   - "edge"
