@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/bvgroup-co/otf/compare/v0.6.0...v0.6.1) (2026-05-23)
+
+
+### Bug Fixes
+
+* publish release images to ghcr ([39544c1](https://github.com/bvgroup-co/otf/commit/39544c1ba93a506cb396798b84eff3453dbc6003))
+
 ## [0.6.0](https://github.com/bvgroup-co/otf/compare/v0.5.24...v0.6.0) (2026-05-23)
 
 
